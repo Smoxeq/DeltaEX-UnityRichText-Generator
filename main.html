@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DX | Unity Rich Text Gradient :: Generator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=JetBrains+Mono&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --accent: #38bdf8;
+        }
+        body {
+            background-color: var(--bg-color);
+            color: #f1f5f9;
+            font-family: 'Inter', sans-serif;
+            min-height: 100vh;
+        }
+        .glass {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .gradient-preview {
+            min-height: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            border-radius: 12px;
+            background: #000;
+            font-size: 1.5rem;
+            font-weight: bold;
+            word-break: break-all;
+            text-align: center;
+        }
+        input[type="color"] {
+            -webkit-appearance: none;
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            background: transparent;
+        }
+        input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
+        input[type="color"]::-webkit-color-swatch {
+            border: 2px solid #fff;
+            border-radius: 50%;
+        }
+        .copy-btn:active { transform: scale(0.95); }
+        .tab-active { border-bottom: 2px solid var(--accent); color: var(--accent); }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+    <div class="max-w-4xl mx-auto">
+        <!-- Header -->
+        <header class="text-center mb-8">
+            <h1 class="text-3xl md:text-5xl font-extrabold bg-gradient-to-r from-blue-400 to-emerald-400 bg-clip-text text-transparent">
+                Unity Rich Text
+            </h1>
+            <p class="text-slate-400 mt-2">Генератор градиентов и стилей для UI</p>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            <!-- Settings Column -->
+            <div class="lg:col-span-5 space-y-6">
+                <div class="glass p-6 rounded-2xl space-y-4">
+                    <label class="block">
+                        <span class="text-sm font-semibold text-slate-300">Введите текст:</span>
+                        <textarea id="inputText" class="w-full mt-2 p-3 bg-slate-900 border border-slate-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none h-24" placeholder="Hello Unity...">HELLO WORLD</textarea>
+                    </label>
+
+                    <div>
+                        <span class="text-sm font-semibold text-slate-300">Тип окрашивания:</span>
+                        <div class="flex gap-2 mt-2">
+                            <button onclick="setMode('solid')" id="btn-solid" class="flex-1 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 transition">Один цвет</button>
+                            <button onclick="setMode('gradient')" id="btn-gradient" class="flex-1 py-2 rounded-lg bg-blue-600 transition">Градиент</button>
+                        </div>
+                    </div>
+
+                    <div id="colorSettings">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="text-sm font-semibold text-slate-300">Цвета (от 2 до 5):</span>
+                            <div class="flex gap-1">
+                                <button onclick="adjustColorsCount(-1)" class="w-8 h-8 flex items-center justify-center bg-slate-800 rounded-md">-</button>
+                                <button onclick="adjustColorsCount(1)" class="w-8 h-8 flex items-center justify-center bg-slate-800 rounded-md">+</button>
+                            </div>
+                        </div>
+                        <div id="colorPickers" class="flex flex-wrap gap-3 p-2 bg-slate-900/50 rounded-xl">
+                            <!-- Dynamic colors here -->
+                        </div>
+                    </div>
+
+                    <div id="hardnessSetting">
+                        <label class="block">
+                            <div class="flex justify-between text-sm font-semibold text-slate-300">
+                                <span>Плотность градиента:</span>
+                                <span id="hardnessVal">100%</span>
+                            </div>
+                            <input type="range" id="hardness" min="10" max="100" value="100" class="w-full mt-2 accent-blue-500">
+                            <p class="text-[10px] text-slate-500 mt-1 uppercase tracking-wider">Гладкий <---> Жесткий</p>
+                        </label>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" id="bold" class="w-4 h-4 rounded accent-blue-500">
+                            <span class="text-sm">Жирный</span>
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" id="italic" class="w-4 h-4 rounded accent-blue-500">
+                            <span class="text-sm">Курсив</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Preview Column -->
+            <div class="lg:col-span-7 space-y-6">
+                <div class="glass p-6 rounded-2xl">
+                    <span class="text-sm font-semibold text-slate-300 mb-4 block">Предпросмотр:</span>
+                    <div id="preview" class="gradient-preview">
+                        HELLO WORLD
+                    </div>
+                </div>
+
+                <div class="glass p-6 rounded-2xl">
+                    <div class="flex justify-between items-center mb-4">
+                        <span class="text-sm font-semibold text-slate-300">Код Unity:</span>
+                        <button onclick="copyCode()" class="copy-btn bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-1.5 rounded-lg text-sm font-bold transition flex items-center gap-2">
+                            <span>Копировать</span>
+                        </button>
+                    </div>
+                    <textarea id="outputText" readonly class="w-full p-4 bg-black/50 text-blue-400 font-mono text-sm rounded-xl border border-slate-700 h-40 focus:outline-none"></textarea>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let mode = 'gradient';
+        let colors = ['#FF0000', '#0000FF'];
+        const inputText = document.getElementById('inputText');
+        const outputText = document.getElementById('outputText');
+        const preview = document.getElementById('preview');
+        const hardnessInput = document.getElementById('hardness');
+        const hardnessVal = document.getElementById('hardnessVal');
+        const boldInput = document.getElementById('bold');
+        const italicInput = document.getElementById('italic');
+        const colorPickersContainer = document.getElementById('colorPickers');
+
+        function setMode(newMode) {
+            mode = newMode;
+            document.getElementById('btn-solid').className = mode === 'solid' ? 'flex-1 py-2 rounded-lg bg-blue-600 transition' : 'flex-1 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 transition';
+            document.getElementById('btn-gradient').className = mode === 'gradient' ? 'flex-1 py-2 rounded-lg bg-blue-600 transition' : 'flex-1 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 transition';
+            document.getElementById('hardnessSetting').style.display = mode === 'solid' ? 'none' : 'block';
+            updatePickers();
+            generate();
+        }
+
+        function adjustColorsCount(delta) {
+            const newCount = colors.length + delta;
+            if (newCount >= 2 && newCount <= 5) {
+                if (delta > 0) colors.push('#00FF00');
+                else colors.pop();
+                updatePickers();
+                generate();
+            }
+        }
+
+        function updatePickers() {
+            colorPickersContainer.innerHTML = '';
+            const list = mode === 'solid' ? [colors[0]] : colors;
+            list.forEach((color, index) => {
+                const input = document.createElement('input');
+                input.type = 'color';
+                input.value = color;
+                input.oninput = (e) => {
+                    colors[index] = e.target.value;
+                    generate();
+                };
+                colorPickersContainer.appendChild(input);
+            });
+        }
+
+        function hexToRgb(hex) {
+            const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+            return result ? {
+                r: parseInt(result[1], 16),
+                g: parseInt(result[2], 16),
+                b: parseInt(result[3], 16)
+            } : null;
+        }
+
+        function rgbToHex(r, g, b) {
+            return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1).toUpperCase();
+        }
+
+        function interpolateColor(color1, color2, factor) {
+            const c1 = hexToRgb(color1);
+            const c2 = hexToRgb(color2);
+            const r = Math.round(c1.r + (c2.r - c1.r) * factor);
+            const g = Math.round(c1.g + (c2.g - c1.g) * factor);
+            const b = Math.round(c1.b + (c2.b - c1.b) * factor);
+            return rgbToHex(r, g, b);
+        }
+
+        function generate() {
+            const text = inputText.value;
+            const hardness = parseInt(hardnessInput.value) / 100;
+            hardnessVal.innerText = Math.round(hardness * 100) + '%';
+            
+            let richText = "";
+            let htmlPreview = "";
+
+            if (mode === 'solid') {
+                const color = colors[0];
+                richText = `<color=${color}>${text}</color>`;
+                htmlPreview = `<span style="color:${color}">${text}</span>`;
+            } else {
+                // Gradient Logic
+                const chars = text.split('');
+                const charCount = chars.length;
+                
+                chars.forEach((char, i) => {
+                    if (char === ' ') {
+                        richText += ' ';
+                        htmlPreview += ' ';
+                        return;
+                    }
+
+                    // Calculate progress based on hardness
+                    // If hardness is 1.0, every character has a unique color
+                    // If hardness is low, we repeat colors or jump steps
+                    let progress = charCount > 1 ? i / (charCount - 1) : 0;
+                    
+                    // Apply hardness logic: quantize the progress
+                    if (hardness < 1) {
+                        const steps = Math.max(2, Math.floor(charCount * hardness));
+                        progress = Math.floor(progress * steps) / (steps - 1);
+                    }
+
+                    // Multi-stop color interpolation
+                    const segmentCount = colors.length - 1;
+                    const scaledProgress = progress * segmentCount;
+                    const index = Math.min(Math.floor(scaledProgress), segmentCount - 1);
+                    const factor = scaledProgress - index;
+                    
+                    const color = interpolateColor(colors[index], colors[index + 1], factor);
+                    
+                    richText += `<color=${color}>${char}</color>`;
+                    htmlPreview += `<span style="color:${color}">${char}</span>`;
+                });
+            }
+
+            if (boldInput.checked) {
+                richText = `<b>${richText}</b>`;
+                htmlPreview = `<b>${htmlPreview}</b>`;
+            }
+            if (italicInput.checked) {
+                richText = `<i>${richText}</i>`;
+                htmlPreview = `<i>${htmlPreview}</i>`;
+            }
+
+            outputText.value = richText;
+            preview.innerHTML = htmlPreview;
+        }
+
+        function copyCode() {
+            outputText.select();
+            document.execCommand('copy');
+            const btn = document.querySelector('.copy-btn');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<span>Скопировано!</span>';
+            btn.classList.replace('bg-emerald-600', 'bg-blue-600');
+            setTimeout(() => {
+                btn.innerHTML = originalText;
+                btn.classList.replace('bg-blue-600', 'bg-emerald-600');
+            }, 2000);
+        }
+
+        // Listeners
+        inputText.oninput = generate;
+        hardnessInput.oninput = generate;
+        boldInput.onchange = generate;
+        italicInput.onchange = generate;
+
+        // Init
+        updatePickers();
+        generate();
+    </script>
+</body>
+</html>
