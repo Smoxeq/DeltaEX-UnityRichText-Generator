@@ -1,0 +1,1 @@
+# DeltaEX-UnityRichText-Generator
